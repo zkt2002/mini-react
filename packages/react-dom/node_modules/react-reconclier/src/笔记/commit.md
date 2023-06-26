@@ -1,0 +1,3 @@
+commit阶段执行的任务
+1.fiber树的切换
+2.执行Placement对应操作
