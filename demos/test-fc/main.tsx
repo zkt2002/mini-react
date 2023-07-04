@@ -23,9 +23,21 @@ function App() {
 		setNum(3);
 	}
 
+	return (
+		<ul onClickCapture={() => setNum(num + 1)}>
+			<>
+				<li>5</li>
+				<li>6</li>
+			</>
+			<li>3</li>
+			<li>4</li>
+			{arr}
+		</ul>
+	);
+
 	// return num === 3 ? <Child /> : <div>{num}</div>;
 	// return <div onClick={() => setNum(num + 1)}>{num}</div>;
-	return <ul onClickCapture={() => setNum(num + 1)}>{arr}</ul>;
+	// return <ul onClickCapture={() => setNum(num + 1)}>{arr}</ul>;
 }
 
 function Child() {

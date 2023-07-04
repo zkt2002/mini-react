@@ -1,4 +1,4 @@
-import { REACT_ELEMENT_TYPE } from 'shared/ReactSymbols';
+import { REACT_ELEMENT_TYPE, REACT_FRAGMENT_TYPE } from 'shared/ReactSymbols';
 import {
 	Key,
 	ElementType,
@@ -76,6 +76,8 @@ export function isValidElement(object: any) {
 		object.$$typeof === REACT_ELEMENT_TYPE
 	);
 }
+
+export const Fragment = REACT_FRAGMENT_TYPE;
 
 // jsxDEV传入的后续几个参数与jsx不同
 export const jsxDEV = (type: ElementType, config: any) => {
