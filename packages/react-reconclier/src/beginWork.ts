@@ -21,7 +21,7 @@ export const beginWork = (wip: FiberNode) => {
 	switch (wip.tag) {
 		case HostRoot:
 			// 计算状态的最新值
-			// 创建子fiberNode
+			// 创建子fiberNode, 该fiberNode是根节点
 			return updateHostRoot(wip);
 		case HostComponent:
 			// 创造子fiberNode
@@ -69,7 +69,10 @@ function updateHostComponent(wip: FiberNode) {
 	return wip.child;
 }
 
-// 建立 fiberNode的child连接
+/** 建立 fiberNode的child连接；
+ *  处理 childDeletion的情况；
+ *  处理 节点移动的情况
+ */
 function reconcileChildren(wip: FiberNode, children?: ReactElementType) {
 	const current = wip.alternate;
 

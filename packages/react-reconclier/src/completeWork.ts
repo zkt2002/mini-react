@@ -11,7 +11,13 @@ import {
 	HostRoot,
 	HostText
 } from './workTags';
-import { NoFlags } from './fiberFlags';
+import { NoFlags, Update } from './fiberFlags';
+import { updateFiberProps } from 'react-dom/src/SyntheticEvent';
+
+/** 标记fiber的更新状态 */
+function markUpdate(fiber: FiberNode) {
+	fiber.flags |= Update;
+}
 
 export const completeWork = (wip: FiberNode) => {
 	// 递归的归阶段
@@ -26,7 +32,11 @@ export const completeWork = (wip: FiberNode) => {
 		case HostComponent:
 			if (current !== null && wip.stateNode) {
 				// update
+				// 1.props是否发生变化， {onClick: xx} {onClick: xxx}
+				// 2. 变了Update Flag
+				updateFiberProps(wip.stateNode, newProps);
 			} else {
+				// mount
 				// 构建离屏DOM树
 				const instance = createInstance(wip.type, newProps);
 				// 将dom插入到离屏DOM，即instance中，后续在commitWork中插入到真实的DOM
@@ -38,6 +48,11 @@ export const completeWork = (wip: FiberNode) => {
 		case HostText:
 			if (current !== null && wip.stateNode) {
 				// update
+				const oldText = current.memorizedProps?.content;
+				const newText = newProps.content;
+				if (oldText != newText) {
+					markUpdate(wip);
+				}
 			} else {
 				const instance = createTextInstance(newProps.content);
 				wip.stateNode = instance;

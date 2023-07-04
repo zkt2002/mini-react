@@ -39,7 +39,7 @@ export const enqueueUpdate = <Action>(
 	updateQueue.shared.pending = update;
 };
 
-// 消费更新队列中的更新元素
+/** 消费更新队列中的更新元素 */
 export const processUpdateQueue = <State>(
 	baseState: State,
 	pendingUpdate: Update<State> | null
