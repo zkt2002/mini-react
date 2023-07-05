@@ -24,16 +24,25 @@ function App() {
 	}
 
 	return (
-		<ul onClickCapture={() => setNum(num + 1)}>
-			<>
-				<li>5</li>
-				<li>6</li>
-			</>
-			<li>3</li>
-			<li>4</li>
-			{arr}
-		</ul>
+		<>
+			<div>
+				<div>123</div>
+				<div>456</div>
+			</div>
+			<div>
+				<div>123</div>
+				<div>456</div>
+			</div>
+		</>
 	);
+
+	{
+		/* <ul onClickCapture={() => setNum(num + 1)}>
+			<li>5</li>
+			<li>6</li>
+			{arr}
+		</ul> */
+	}
 
 	// return num === 3 ? <Child /> : <div>{num}</div>;
 	// return <div onClick={() => setNum(num + 1)}>{num}</div>;

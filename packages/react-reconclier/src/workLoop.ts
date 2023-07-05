@@ -98,6 +98,11 @@ function commitRoot(root: FiberRootNode) {
 	}
 }
 
+/** reconclie的关键函数，beginwork和completeWork的调用处
+ *
+ *  从父节点开始beginWork -> 子节点 beginWork -> 子节点completeWork -> 父节点completeWork
+ *  -> 父级的兄弟节点completeWork
+ */
 function workLoop() {
 	while (workInProgress != null) {
 		performUnitOfWork(workInProgress);
@@ -125,6 +130,7 @@ function completeUnitOfWork(fiber: FiberNode) {
 		completeWork(node);
 
 		const sibling = node.sibling;
+		// 开始遍历兄弟节点
 		if (sibling !== null) {
 			workInProgress = sibling;
 			return;

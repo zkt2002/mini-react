@@ -126,9 +126,11 @@ function ChildReconclier(shouldTrackEffects: boolean) {
 		return fiber;
 	}
 
+	/** 处理多节点的情况，包含diff算法 */
 	function reconclieChildrenArray(
 		returnFiber: FiberNode,
 		currentFirstChild: FiberNode | null,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		newChild: any[]
 	) {
 		/** 最后一个可复用的fiber在current中的index */
@@ -167,6 +169,7 @@ function ChildReconclier(shouldTrackEffects: boolean) {
 			newFiber.index = i;
 			newFiber.return = returnFiber;
 
+			// 构建子节点之间的关联，即兄弟节点关系 sibling
 			if (lastNewFiber === null) {
 				lastNewFiber = newFiber;
 				firstNewFiber = newFiber;
@@ -175,6 +178,7 @@ function ChildReconclier(shouldTrackEffects: boolean) {
 				lastNewFiber = lastNewFiber.sibling;
 			}
 
+			// mount节点时候不需要处理节点的移动和删除情况，因此可以直接continue
 			if (!shouldTrackEffects) {
 				continue;
 			}
@@ -207,6 +211,7 @@ function ChildReconclier(shouldTrackEffects: boolean) {
 		returnFiber: FiberNode,
 		existingChildren: ExistingChildren,
 		index: number,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		element: any
 	): FiberNode | null {
 		const keyToUse = element.key !== null ? element.key : index;
@@ -244,11 +249,6 @@ function ChildReconclier(shouldTrackEffects: boolean) {
 						}
 					}
 					return createFiberFromElement(element);
-			}
-
-			// 数组类型
-			if (Array.isArray(element) && __DEV__) {
-				console.warn('还未实现的数组类型的cgukd');
 			}
 		}
 
@@ -333,6 +333,7 @@ function useFiber(fiber: FiberNode, pendingProps: Props): FiberNode {
 function updateFragment(
 	returnFiber: FiberNode,
 	current: FiberNode | undefined,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	elements: any[],
 	key: Key,
 	existingChildren: ExistingChildren
@@ -341,6 +342,7 @@ function updateFragment(
 	if (!current || current.tag !== Fragment) {
 		fiber = createFiberFromFragment(elements, key);
 	} else {
+		// 复用的情况
 		existingChildren.delete(key);
 		fiber = useFiber(current, elements);
 	}
