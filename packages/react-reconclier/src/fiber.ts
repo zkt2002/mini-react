@@ -8,6 +8,7 @@ import {
 import { Flags, NoFlags } from './fiberFlags';
 import { Container } from 'hostConfig';
 import { Lane, Lanes, NoLane, NoLanes } from './fiberLanes';
+import { Effect } from './fiberHooks';
 
 export class FiberNode {
 	type: any;
@@ -62,6 +63,11 @@ export class FiberNode {
 	}
 }
 
+export interface PendingPassiveEffects {
+	unmount: Effect[];
+	update: Effect[];
+}
+
 export class FiberRootNode {
 	container: Container;
 	// 指向hostRootFiber
@@ -72,6 +78,8 @@ export class FiberRootNode {
 	pendingLanes: Lanes;
 	/** 本次更新消费的lane */
 	finishedLane: Lane;
+	/** 用于保存未执行的effect,包括更新和卸载两种情况 */
+	pendingPassiveEffects: PendingPassiveEffects;
 
 	constructor(container: Container, hostRootFiber: FiberNode) {
 		this.container = container;
@@ -80,6 +88,13 @@ export class FiberRootNode {
 		this.finishedWork = null;
 		this.pendingLanes = NoLanes;
 		this.finishedLane = NoLane;
+		// 保存未执行的effect
+		this.pendingPassiveEffects = {
+			// 属于卸载组件的
+			unmount: [],
+			// 属于更新组件的
+			update: []
+		};
 	}
 }
 
