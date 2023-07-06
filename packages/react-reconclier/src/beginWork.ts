@@ -11,9 +11,10 @@ import {
 } from './workTags';
 import { mountChildFibers, reconcileChildFibers } from './childFibers';
 import { renderWithHooks } from './fiberHooks';
+import { Lane } from './fiberLanes';
 
 // 递归中的递阶段
-export const beginWork = (wip: FiberNode) => {
+export const beginWork = (wip: FiberNode, renderLane: Lane) => {
 	if (__DEV__) {
 		console.log('beginWork流程', wip.type);
 	}
@@ -23,7 +24,7 @@ export const beginWork = (wip: FiberNode) => {
 		case HostRoot:
 			// 计算状态的最新值
 			// 创建子fiberNode, 该fiberNode是根节点
-			return updateHostRoot(wip);
+			return updateHostRoot(wip, renderLane);
 		case HostComponent:
 			// 创造子fiberNode
 			return updateHostComponent(wip);
@@ -31,7 +32,7 @@ export const beginWork = (wip: FiberNode) => {
 			// 递归到了叶子节点，开始completeWork
 			return null;
 		case FunctionComponent:
-			return updateFunctionComponent(wip);
+			return updateFunctionComponent(wip, renderLane);
 		case Fragment:
 			return updateFragment(wip);
 		default:
@@ -50,20 +51,20 @@ function updateFragment(wip: FiberNode) {
 	return wip.child;
 }
 
-function updateFunctionComponent(wip: FiberNode) {
+function updateFunctionComponent(wip: FiberNode, renderLane: Lane) {
 	// 执行函数组件，hooks开始工作
 	// 执行完此步骤后和正常运行jsx的流程是一致的
-	const nextChildren = renderWithHooks(wip);
+	const nextChildren = renderWithHooks(wip, renderLane);
 	reconcileChildren(wip, nextChildren);
 	return wip.child;
 }
 
-function updateHostRoot(wip: FiberNode) {
+function updateHostRoot(wip: FiberNode, renderLane: Lane) {
 	const baseState = wip.memorizedState;
 	const updateQueue = wip.updateQueue as UpdateQueue<Element>;
 	const pending = updateQueue.shared.pending;
 	updateQueue.shared.pending = null;
-	const { memorizedState } = processUpdateQueue(baseState, pending);
+	const { memorizedState } = processUpdateQueue(baseState, pending, renderLane);
 	wip.memorizedState = memorizedState;
 
 	const nextChildren = wip.memorizedState;

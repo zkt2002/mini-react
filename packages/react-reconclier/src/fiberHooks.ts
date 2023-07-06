@@ -11,6 +11,7 @@ import {
 } from './updateQueue';
 import { Action } from 'shared/ReactTypes';
 import { scheduleUpdateOnFiber } from './workLoop';
+import { Lane, NoLane, requestUpdateLane } from './fiberLanes';
 
 // 指向当前运行的fiberNode
 let currentlyRenderingFiber: FiberNode | null = null;
@@ -19,6 +20,7 @@ let workInProgressHook: Hook | null = null;
 let currentHook: Hook | null = null;
 
 const { currentDispatcher } = internals;
+let renderLane: Lane = NoLane;
 
 interface Hook {
 	// 指向hook自身的数据
@@ -27,11 +29,14 @@ interface Hook {
 	next: Hook | null;
 }
 
-export function renderWithHooks(wip: FiberNode) {
+/** function组件的入口，在该函数中会执行函数组件 */
+export function renderWithHooks(wip: FiberNode, lane: Lane) {
 	// 赋值操作
 	currentlyRenderingFiber = wip;
 	// 重置 hooks 链表
 	wip.memorizedState = null;
+	wip.updateQueue = null;
+	renderLane = lane;
 
 	const current = wip.alternate;
 
@@ -52,6 +57,7 @@ export function renderWithHooks(wip: FiberNode) {
 	currentlyRenderingFiber = null;
 	workInProgressHook = null;
 	currentHook = null;
+	renderLane = NoLane;
 	return children;
 }
 
@@ -73,8 +79,14 @@ function updateState<State>(): [State, Dispatch<State>] {
 	const pending = queue.shared.pending;
 
 	if (pending !== null) {
-		const { memorizedState } = processUpdateQueue(hook.memorizedState, pending);
+		const { memorizedState } = processUpdateQueue(
+			hook.memorizedState,
+			pending,
+			renderLane
+		);
 		hook.memorizedState = memorizedState;
+		// 每次更新完之后需要置空，否则后续的更新会一直被添加进入queue中
+		queue.shared.pending = null;
 	}
 
 	return [hook.memorizedState, queue.dispatch as Dispatch<State>];
@@ -146,10 +158,9 @@ function mountState<State>(
 	} else {
 		memorizedState = initialState;
 	}
-
+	hook.memorizedState = memorizedState;
 	const queue = createUpdateQueue<State>();
 	hook.UpdateQueue = queue;
-	hook.memorizedState = memorizedState;
 
 	// @ts-ignore
 	const dispatch = dispatchSetState.bind(null, currentlyRenderingFiber, queue);
@@ -164,10 +175,12 @@ function dispatchSetState<State>(
 	updateQueue: UpdateQueue<State>,
 	action: Action<State>
 ) {
-	const update = createUpdate(action);
+	const lane = requestUpdateLane();
+	const update = createUpdate(action, lane);
+
 	enqueueUpdate(updateQueue, update);
 
-	scheduleUpdateOnFiber(fiber);
+	scheduleUpdateOnFiber(fiber, lane);
 }
 
 /**

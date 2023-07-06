@@ -19,22 +19,30 @@ function App() {
 			? [<li key="1">1</li>, <li key="2">2</li>, <li key="3">3</li>]
 			: [<li key="3">3</li>, <li key="2">2</li>, <li key="1">1</li>];
 
-	if (num === 5) {
-		setNum(3);
-	}
-
 	return (
-		<>
-			<div>
-				<div>123</div>
-				<div>456</div>
-			</div>
-			<div>
-				<div>123</div>
-				<div>456</div>
-			</div>
-		</>
+		<ul
+			onClickCapture={() => {
+				setNum((num) => num + 2);
+				setNum((num) => num - 2);
+				setNum((num) => num + 2);
+			}}
+		>
+			{num}
+		</ul>
 	);
+
+	// return (
+	// 	<>
+	// 		<div>
+	// 			<div>123</div>
+	// 			<div>456</div>
+	// 		</div>
+	// 		<div>
+	// 			<div>123</div>
+	// 			<div>456</div>
+	// 		</div>
+	// 	</>
+	// );
 
 	{
 		/* <ul onClickCapture={() => setNum(num + 1)}>
