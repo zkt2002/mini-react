@@ -17,6 +17,6 @@ module.exports = {
 	fakeTimers: {
 		enableGlobally: true,
 		legacyFakeTimers: true
-	}
-	// setupFilesAfterEnv: ['./scripts/jest/setupJest.js']
+	},
+	setupFilesAfterEnv: ['./scripts/jest/setupJest.js']
 };

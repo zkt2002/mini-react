@@ -83,11 +83,13 @@ export function renderWithHooks(wip: FiberNode, lane: Lane) {
 
 const HooksDispathcerOnMount: Dispatcher = {
 	useState: mountState,
+	// @ts-ignore
 	useEffect: mountEffect
 };
 
 const HooksDispathcerOnUpdate: Dispatcher = {
 	useState: updateState,
+	// @ts-ignore
 	useEffect: updateEffect
 };
 
@@ -128,6 +130,7 @@ function updateEffect(create: EffectCallback | void, deps: EffectDeps) {
 	hook.memorizedState = pushEffect(
 		Passive | HookHasEffect,
 		create,
+		// @ts-ignore
 		destroy,
 		nextDeps
 	);

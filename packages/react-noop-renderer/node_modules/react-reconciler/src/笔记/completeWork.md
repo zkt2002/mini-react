@@ -1,0 +1,7 @@
+需要解决的问题:
+对于Host类型的fiberNode:构建离屏DOM树
+标记UPdate flag
+
+completeWork性能优化策略
+flags 分布在不同的fiberNode中,如何快速找到他们
+答案：利用completeWork向上遍历(归)的过程，将子fiberNode的flags冒泡到父fiberNode

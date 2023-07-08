@@ -1,5 +1,6 @@
 import {
 	Container,
+	Instance,
 	appendInitialChild,
 	createInstance,
 	createTextInstance
@@ -13,7 +14,6 @@ import {
 	HostText
 } from './workTags';
 import { NoFlags, Update } from './fiberFlags';
-import { updateFiberProps } from 'react-dom/src/SyntheticEvent';
 
 /** 标记fiber的更新状态 */
 function markUpdate(fiber: FiberNode) {
@@ -35,7 +35,7 @@ export const completeWork = (wip: FiberNode) => {
 				// update
 				// 1.props是否发生变化， {onClick: xx} {onClick: xxx}
 				// 2. 变了Update Flag
-				updateFiberProps(wip.stateNode, newProps);
+				markUpdate(wip);
 			} else {
 				// mount
 				// 构建离屏DOM树
@@ -73,12 +73,13 @@ export const completeWork = (wip: FiberNode) => {
 	}
 };
 
-function appendAllChildren(parent: Container, wip: FiberNode) {
+function appendAllChildren(parent: Container | Instance, wip: FiberNode) {
 	let node = wip.child;
 
 	// 先遍历子节点，自上而下，再遍历兄弟节点，自下而上
 	while (node !== null) {
 		if (node.tag === HostComponent || node.tag === HostText) {
+			// @ts-ignore
 			appendInitialChild(parent, node?.stateNode);
 		} else if (node.child !== null) {
 			// 递归向下
