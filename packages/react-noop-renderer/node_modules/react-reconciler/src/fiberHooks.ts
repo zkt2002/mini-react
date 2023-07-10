@@ -3,6 +3,7 @@ import { FiberNode } from './fiber';
 import { Dispatcher } from 'react/src/currentDispatcher';
 import { Dispatch } from 'react/src/currentDispatcher';
 import {
+	Update,
 	UpdateQueue,
 	createUpdate,
 	createUpdateQueue,
@@ -18,9 +19,9 @@ import { HookHasEffect, Passive } from './hookEffectTag';
 // 指向当前运行的fiberNode
 let currentlyRenderingFiber: FiberNode | null = null;
 // 指向当前运行的hook
-/** 执行当前运行的Hook */
+/** 执行当前运行的Hook，该wiphook是进行操作的，类似wip和current的双缓存hook */
 let workInProgressHook: Hook | null = null;
-/** 从当前FC中获取的Hook，他运行后的结果会给workInProgressHook */
+/** 从当前FC中获取的Hook，指向当前运行到的hook，他运行后的结果会给workInProgressHook */
 let currentHook: Hook | null = null;
 
 const { currentDispatcher } = internals;
@@ -31,6 +32,13 @@ interface Hook {
 	memorizedState: any;
 	UpdateQueue: unknown;
 	next: Hook | null;
+	/** 初始参与计算的state，他与memorizedState的区别是，
+	 *  他保存最后一个未被跳过的update计算后的结果
+	 *  如果没有update被跳过，则他和memorizedState是一致的
+	 */
+	baseState: any;
+	/** 保存上一次因为优先级不足未执行的update */
+	baseQueue: Update<any> | null;
 }
 
 export interface Effect {
@@ -203,17 +211,44 @@ function updateState<State>(): [State, Dispatch<State>] {
 
 	// 计算新state的逻辑
 	const queue = hook.UpdateQueue as UpdateQueue<State>;
+	const baseState = hook.baseState;
+
 	const pending = queue.shared.pending;
+	const current = currentHook as Hook;
+	let baseQueue = current.baseQueue;
 
 	if (pending !== null) {
-		const { memorizedState } = processUpdateQueue(
-			hook.memorizedState,
-			pending,
-			renderLane
-		);
-		hook.memorizedState = memorizedState;
+		// pending baseQueue update保存在current中
+		if (baseQueue !== null) {
+			// 上次因为优先级不足而未执行的update
+			// baseQueue b2 -> b0 -> b1 -> b2
+			// pendingQueue p2 -> p0 -> p1 -> p2
+			// b0
+			const baseFirst = baseQueue.next;
+			// p0
+			const pengdingFirst = pending.next;
+			// b2 -> p0
+			baseQueue.next = pengdingFirst;
+			// p2 -> b0
+			pending.next = baseFirst;
+			// p2 -> b0 -> b1 -> b2 -> p0 -> p1 -> p2
+		}
+		baseQueue = pending;
+		// 保存在current中
+		current.baseQueue = pending;
 		// 每次更新完之后需要置空，否则后续的更新会一直被添加进入queue中
 		queue.shared.pending = null;
+
+		if (baseQueue !== null) {
+			const {
+				memorizedState,
+				baseQueue: newBaseQueue,
+				baseState: newBaseState
+			} = processUpdateQueue(baseState, baseQueue, renderLane);
+			hook.memorizedState = memorizedState;
+			hook.baseQueue = newBaseQueue;
+			hook.baseState = newBaseState;
+		}
 	}
 
 	return [hook.memorizedState, queue.dispatch as Dispatch<State>];
@@ -259,7 +294,9 @@ function updateWorkInProgressHook(): Hook {
 	const newHook: Hook = {
 		memorizedState: currentHook.memorizedState,
 		UpdateQueue: currentHook.UpdateQueue,
-		next: null
+		next: null,
+		baseQueue: currentHook.baseQueue,
+		baseState: currentHook.baseState
 	};
 
 	if (workInProgressHook === null) {
@@ -323,7 +360,9 @@ function mountWorkInProgressHook(): Hook {
 	const hook: Hook = {
 		memorizedState: null,
 		UpdateQueue: null,
-		next: null
+		next: null,
+		baseQueue: null,
+		baseState: null
 	};
 
 	if (workInProgressHook === null) {

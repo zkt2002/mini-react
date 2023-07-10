@@ -1,11 +1,11 @@
-// import {
-// 	unstable_NormalPriority as NormalPriority,
-// 	unstable_ImmediatePriority as ImmediatePriority,
-// 	unstable_IdlePriority as IdlePriority,
-// 	unstable_LowPriority as LowPriority,
-// 	unstable_UserBlockingPriority as UserBlockingPriority,
-// 	unstable_getCurrentPriorityLevel as getCurrentSchedulerPriorityLevel
-// } from 'scheduler';
+import {
+	unstable_NormalPriority as NormalPriority,
+	unstable_ImmediatePriority as ImmediatePriority,
+	unstable_IdlePriority as IdlePriority,
+	unstable_LowPriority as LowPriority,
+	unstable_UserBlockingPriority as UserBlockingPriority,
+	unstable_getCurrentPriorityLevel as getCurrentSchedulerPriorityLevel
+} from 'scheduler';
 import { FiberRootNode } from './fiber';
 
 export type Lane = number;
@@ -28,13 +28,10 @@ export function requestUpdateLane() {
 	// TODO Transition
 
 	// 从当前上下文中获取优先级信息
-	// const currentSchedulerPriorityLevel = getCurrentSchedulerPriorityLevel();
-	// const updateLane = schedulerPriorityToLane(currentSchedulerPriorityLevel);
-	// console.warn('updateLane!', updateLane);
-	// return updateLane;
-	const updateLane = SyncLane;
+	const currentSchedulerPriorityLevel = getCurrentSchedulerPriorityLevel();
+	const updateLane = schedulerPriorityToLane(currentSchedulerPriorityLevel);
 	console.warn('updateLane!', updateLane);
-	return SyncLane;
+	return updateLane;
 }
 /**
  * 一个二进制数与他的负数得到的结果必然是他最后为1的那一位数
@@ -44,10 +41,6 @@ export function requestUpdateLane() {
  * 依据这种原理可以得到lanes中的最高位的优先级，越小优先级越大,最后一位为最大优先级
  */
 export function getHighestPriorityLane(lanes: Lanes): Lane {
-	// 一个二进制数与他的负数得到的结果必然是他最后为1的那一位数
-	// 例如 0b00111100，他的负数为0b11000100,（负数为正数取反后 + 1）
-	// 这两个数取余之后为 0b00000100
-	// 依据这种原理可以得到lanes中的最高位的优先级，越小优先级越大,最后一位为最大优先级
 	return lanes & -lanes;
 }
 
@@ -76,31 +69,31 @@ export function getNextLanes(root: FiberRootNode): Lanes {
 }
 
 // lanes向Scheduler优先级转换
-// export function lanesToSchedulerPriority(lanes: Lanes) {
-// 	const lane = getHighestPriorityLane(lanes);
-// 	if (lane === SyncLane) {
-// 		return ImmediatePriority;
-// 	}
-// 	if (lane === InputContinuousLane) {
-// 		return UserBlockingPriority;
-// 	}
-// 	if (lane === DefaultLane) {
-// 		return NormalPriority;
-// 	}
-// 	// 剩下的做空闲处理
-// 	return IdlePriority;
-// }
+export function lanesToSchedulerPriority(lanes: Lanes) {
+	const lane = getHighestPriorityLane(lanes);
+	if (lane === SyncLane) {
+		return ImmediatePriority;
+	}
+	if (lane === InputContinuousLane) {
+		return UserBlockingPriority;
+	}
+	if (lane === DefaultLane) {
+		return NormalPriority;
+	}
+	// 剩下的做空闲处理
+	return IdlePriority;
+}
 
-// // Scheduler优先级向lanes转换
-// export function schedulerPriorityToLane(schedulerPriority: number): Lane {
-// 	if (schedulerPriority === ImmediatePriority) {
-// 		return SyncLane;
-// 	}
-// 	if (schedulerPriority === UserBlockingPriority) {
-// 		return InputContinuousLane;
-// 	}
-// 	if (schedulerPriority === NormalPriority) {
-// 		return DefaultLane;
-// 	}
-// 	return NoLane;
-// }
+// Scheduler优先级向lanes转换
+export function schedulerPriorityToLane(schedulerPriority: number): Lane {
+	if (schedulerPriority === ImmediatePriority) {
+		return SyncLane;
+	}
+	if (schedulerPriority === UserBlockingPriority) {
+		return InputContinuousLane;
+	}
+	if (schedulerPriority === NormalPriority) {
+		return DefaultLane;
+	}
+	return NoLane;
+}

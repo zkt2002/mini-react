@@ -1,3 +1,4 @@
+import { CallbackNode } from 'scheduler';
 import { Key, Props, ReactElementType, Ref } from 'shared/ReactTypes';
 import {
 	Fragment,
@@ -81,6 +82,11 @@ export class FiberRootNode {
 	/** 用于保存未执行的effect,包括更新和卸载两种情况 */
 	pendingPassiveEffects: PendingPassiveEffects;
 
+	/** 用于保存当前执行的render回调函数 */
+	callbackNode: CallbackNode | null;
+	/** 当前render的优先级 */
+	callbackPriority: Lane;
+
 	constructor(container: Container, hostRootFiber: FiberNode) {
 		this.container = container;
 		this.current = hostRootFiber;
@@ -88,6 +94,10 @@ export class FiberRootNode {
 		this.finishedWork = null;
 		this.pendingLanes = NoLanes;
 		this.finishedLane = NoLane;
+
+		this.callbackNode = null;
+		this.callbackPriority = NoLane;
+
 		// 保存未执行的effect
 		this.pendingPassiveEffects = {
 			// 属于卸载组件的

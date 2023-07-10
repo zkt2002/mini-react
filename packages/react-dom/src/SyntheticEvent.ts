@@ -1,5 +1,11 @@
+import {
+	DefaultLane,
+	InputContinuousLane,
+	SyncLane
+} from 'react-reconciler/src/fiberLanes';
 import { Container } from './hostConfig';
 import { Props } from 'shared/ReactTypes';
+import { unstable_runWithPriority } from 'scheduler';
 
 export const elementPropsKey = '__props';
 const validEventTypeList = ['click'];
@@ -87,8 +93,9 @@ function triggerEventFlow(paths: EventCallback[], se: SyntheticEvent) {
 
 	for (let i = 0; i < paths.length; i++) {
 		const callback = paths[i];
-
-		callback.call(null, se);
+		unstable_runWithPriority(eventTypeToEventPriority(se.type), () => {
+			callback.call(null, se);
+		});
 
 		if (se.__stopPropagation) {
 			break;
@@ -141,3 +148,18 @@ function collectPaths(
 
 	return paths;
 }
+
+/** 将事件类型转换成对应的优先级 */
+const eventTypeToEventPriority = (eventType: string) => {
+	switch (eventType) {
+		case 'click':
+		case 'keydown':
+		case 'keyup':
+			return SyncLane;
+		case 'scroll':
+			return InputContinuousLane;
+		// TODO 更多事件类型
+		default:
+			return DefaultLane;
+	}
+};
