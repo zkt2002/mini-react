@@ -1,3 +1,4 @@
+import ReactCurrentBatchConfig from 'react/src/currentBatchConfig';
 import {
 	unstable_NormalPriority as NormalPriority,
 	unstable_ImmediatePriority as ImmediatePriority,
@@ -16,6 +17,7 @@ export const NoLanes = /*              */ 0b0000000000000000000000000000000;
 export const SyncLane = /*             */ 0b0000000000000000000000000000001; // 同步，ex：onClick
 export const InputContinuousLane = /*  */ 0b0000000000000000000000000000010; // 连续触发，ex：onScroll
 export const DefaultLane = /*          */ 0b0000000000000000000000000000100; // 默认，ex：useEffect回调
+export const TransitionLane = /*       */ 0b0000000000000000000000000001000;
 export const IdleLane = /*             */ 0b1000000000000000000000000000000; // 空闲
 
 export function mergeLanes(laneA: Lane, laneB: Lane): Lane {
@@ -26,6 +28,10 @@ export function mergeLanes(laneA: Lane, laneB: Lane): Lane {
 export function requestUpdateLane() {
 	// TODO render阶段触发更新
 	// TODO Transition
+	const isTransition = ReactCurrentBatchConfig.transition !== null;
+	if (isTransition) {
+		return TransitionLane;
+	}
 
 	// 从当前上下文中获取优先级信息
 	const currentSchedulerPriorityLevel = getCurrentSchedulerPriorityLevel();

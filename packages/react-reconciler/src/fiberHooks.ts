@@ -2,6 +2,7 @@ import internals from 'shared/internals';
 import { FiberNode } from './fiber';
 import { Dispatcher } from 'react/src/currentDispatcher';
 import { Dispatch } from 'react/src/currentDispatcher';
+import currentBatchConfig from 'react/src/currentBatchConfig';
 import {
 	Update,
 	UpdateQueue,
@@ -92,13 +93,15 @@ export function renderWithHooks(wip: FiberNode, lane: Lane) {
 const HooksDispathcerOnMount: Dispatcher = {
 	useState: mountState,
 	// @ts-ignore
-	useEffect: mountEffect
+	useEffect: mountEffect,
+	useTransition: mountTransition
 };
 
 const HooksDispathcerOnUpdate: Dispatcher = {
 	useState: updateState,
 	// @ts-ignore
-	useEffect: updateEffect
+	useEffect: updateEffect,
+	useTransition: updateTransition
 };
 
 function mountEffect(create: EffectCallback | void, deps: EffectDeps) {
@@ -238,17 +241,17 @@ function updateState<State>(): [State, Dispatch<State>] {
 		current.baseQueue = pending;
 		// 每次更新完之后需要置空，否则后续的更新会一直被添加进入queue中
 		queue.shared.pending = null;
+	}
 
-		if (baseQueue !== null) {
-			const {
-				memorizedState,
-				baseQueue: newBaseQueue,
-				baseState: newBaseState
-			} = processUpdateQueue(baseState, baseQueue, renderLane);
-			hook.memorizedState = memorizedState;
-			hook.baseQueue = newBaseQueue;
-			hook.baseState = newBaseState;
-		}
+	if (baseQueue !== null) {
+		const {
+			memorizedState,
+			baseQueue: newBaseQueue,
+			baseState: newBaseState
+		} = processUpdateQueue(baseState, baseQueue, renderLane);
+		hook.memorizedState = memorizedState;
+		hook.baseQueue = newBaseQueue;
+		hook.baseState = newBaseState;
 	}
 
 	return [hook.memorizedState, queue.dispatch as Dispatch<State>];
@@ -328,9 +331,10 @@ function mountState<State>(
 	} else {
 		memorizedState = initialState;
 	}
-	hook.memorizedState = memorizedState;
 	const queue = createUpdateQueue<State>();
 	hook.UpdateQueue = queue;
+	hook.memorizedState = memorizedState;
+	hook.baseState = memorizedState;
 
 	// @ts-ignore
 	const dispatch = dispatchSetState.bind(null, currentlyRenderingFiber, queue);
@@ -381,3 +385,31 @@ function mountWorkInProgressHook(): Hook {
 
 	return workInProgressHook;
 }
+
+/** useTransition Start */
+function mountTransition(): [boolean, (callback: () => void) => void] {
+	const [isPending, setPending] = mountState(false);
+	const hook: Hook = mountWorkInProgressHook();
+	const start = startTransition.bind(null, setPending);
+	hook.memorizedState = start;
+	return [isPending, start];
+}
+
+function updateTransition(): [boolean, (callback: () => void) => void] {
+	const [isPending] = updateState();
+	const hook = updateWorkInProgressHook();
+	const start = hook.memorizedState;
+	return [isPending as boolean, start];
+}
+
+function startTransition(setPending: Dispatch<boolean>, callback: () => void) {
+	setPending(true);
+	const prevTransition = currentBatchConfig.transition;
+	currentBatchConfig.transition = 1;
+
+	// 这两个更新会同步更新
+	callback();
+	setPending(false);
+	currentBatchConfig.transition = prevTransition;
+}
+/** useTransition End */
