@@ -4,6 +4,7 @@ import {
 	commitHookEffectListCreate,
 	commitHookEffectListDestroy,
 	commitHookEffectListUnmount,
+	commitLayoutEffects,
 	commitMutationEffects
 } from './commitWork';
 import { completeWork } from './completeWork';
@@ -279,14 +280,24 @@ function commitRoot(root: FiberRootNode) {
 
 	// 有更新的情况
 	if (subtreeHasEffect || rootHasEffect) {
-		// beforeMutation
+		// 有副作用要执行
+
+		// 阶段1/3:beforeMutation
+
+		// 阶段2/3:Mutation
 		// mutation Placement
 		commitMutationEffects(finishedWork, root);
 
+		// Fiber Tree切换
 		root.current = finishedWork;
+
+		// 阶段3/3:Layout
+		commitLayoutEffects(finishedWork, root);
+
 		// layout
 	} else {
 		// 无更新的情况，finishedWork代表wip树，依然需要被渲染
+		// Fiber Tree切换
 		root.current = finishedWork;
 	}
 

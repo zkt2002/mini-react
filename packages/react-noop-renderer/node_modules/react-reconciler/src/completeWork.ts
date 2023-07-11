@@ -13,11 +13,15 @@ import {
 	HostRoot,
 	HostText
 } from './workTags';
-import { NoFlags, Update } from './fiberFlags';
+import { NoFlags, Ref, Update } from './fiberFlags';
 
 /** 标记fiber的更新状态 */
 function markUpdate(fiber: FiberNode) {
 	fiber.flags |= Update;
+}
+
+function markRef(fiber: FiberNode) {
+	fiber.flags |= Ref;
 }
 
 export const completeWork = (wip: FiberNode) => {
@@ -36,6 +40,10 @@ export const completeWork = (wip: FiberNode) => {
 				// 1.props是否发生变化， {onClick: xx} {onClick: xxx}
 				// 2. 变了Update Flag
 				markUpdate(wip);
+				// 标记Ref
+				if (wip.ref !== current.ref) {
+					markRef(wip);
+				}
 			} else {
 				// mount
 				// 构建离屏DOM树
@@ -43,6 +51,10 @@ export const completeWork = (wip: FiberNode) => {
 				// 将dom插入到离屏DOM，即instance中，后续在commitWork中插入到真实的DOM
 				appendAllChildren(instance, wip);
 				wip.stateNode = instance;
+				// 标记Ref
+				if (wip.ref !== null) {
+					markRef(wip);
+				}
 			}
 			bubbleProperties(wip);
 			return null;

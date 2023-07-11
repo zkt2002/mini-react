@@ -94,14 +94,16 @@ const HooksDispathcerOnMount: Dispatcher = {
 	useState: mountState,
 	// @ts-ignore
 	useEffect: mountEffect,
-	useTransition: mountTransition
+	useTransition: mountTransition,
+	useRef: mountRef
 };
 
 const HooksDispathcerOnUpdate: Dispatcher = {
 	useState: updateState,
 	// @ts-ignore
 	useEffect: updateEffect,
-	useTransition: updateTransition
+	useTransition: updateTransition,
+	useRef: updateRef
 };
 
 function mountEffect(create: EffectCallback | void, deps: EffectDeps) {
@@ -413,3 +415,17 @@ function startTransition(setPending: Dispatch<boolean>, callback: () => void) {
 	currentBatchConfig.transition = prevTransition;
 }
 /** useTransition End */
+
+/** useRef start */
+function mountRef<T>(initialValue: T): { current: T } {
+	const hook = mountWorkInProgressHook();
+	const ref = { current: initialValue };
+	hook.memorizedState = ref;
+	return ref;
+}
+
+function updateRef<T>(initialValue: T): { current: T } {
+	const hook = updateWorkInProgressHook();
+	return hook.memorizedState;
+}
+/** useRef End */

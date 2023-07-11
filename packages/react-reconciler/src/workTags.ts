@@ -6,6 +6,7 @@ export type WorkTag =
 	| typeof Fragment;
 
 export const FunctionComponent = 0;
+/** 只有应用根节点才为HostRoot, 即`<div id='root'></div>` */
 export const HostRoot = 3;
 export const HostComponent = 5;
 export const HostText = 6;

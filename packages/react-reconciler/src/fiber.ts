@@ -12,26 +12,29 @@ import { Lane, Lanes, NoLane, NoLanes } from './fiberLanes';
 import { Effect } from './fiberHooks';
 
 export class FiberNode {
-	type: any;
-	tag: WorkTag;
 	pendingProps: Props;
+	memorizedProps: Props | null;
 	key: Key;
 	stateNode: any;
+	type: any;
+	ref: Ref;
+	tag: WorkTag;
+	flags: Flags;
+	subtreeFlags: Flags;
+	deletions: FiberNode[] | null;
 
 	return: FiberNode | null;
 	sibling: FiberNode | null;
 	child: FiberNode | null;
 	index: number;
-	ref: Ref;
 
-	memorizedProps: Props | null;
+	updateQueue: unknown;
 	memorizedState: any;
+
 	// 指向双缓存树对应的另一棵树
 	alternate: FiberNode | null;
-	flags: Flags;
-	subtreeFlags: Flags;
-	updateQueue: unknown;
-	deletions: FiberNode[] | null;
+
+	lanes: Lanes;
 
 	constructor(tag: WorkTag, pendingProps: Props, key: Key) {
 		this.tag = tag;
@@ -47,6 +50,7 @@ export class FiberNode {
 		this.child = null;
 		//   同级相同标签的索引
 		this.index = 0;
+		// @ts-ignore
 		this.ref = null;
 
 		// 作为工作单元
@@ -61,6 +65,8 @@ export class FiberNode {
 		this.flags = NoFlags;
 		this.subtreeFlags = NoFlags;
 		this.deletions = null;
+
+		this.lanes = NoLane;
 	}
 }
 
@@ -135,28 +141,43 @@ export const createWorkInProgress = (
 	wip.type = current.type;
 	wip.updateQueue = current.updateQueue;
 	wip.child = current.child;
+
+	// 数据
 	wip.memorizedProps = current.memorizedProps;
 	wip.memorizedState = current.memorizedState;
+	wip.ref = current.ref;
+
+	wip.lanes = current.lanes;
 
 	return wip;
 };
 
-export function createFiberFromElement(element: ReactElementType): FiberNode {
-	const { type, key, props } = element;
+export function createFiberFromElement(
+	element: ReactElementType,
+	lanes: Lanes
+): FiberNode {
+	const { type, key, props, ref } = element;
 	let fiberTag: WorkTag = FunctionComponent;
 
 	if (typeof type === 'string') {
-		// <div/> type:'div'
 		fiberTag = HostComponent;
-	} else if (typeof type !== 'function' && __DEV__) {
-		console.warn('未定义的type类型', element);
+	} else if (typeof type !== 'function') {
+		console.error('未定义的type类型', element);
 	}
 	const fiber = new FiberNode(fiberTag, props, key);
 	fiber.type = type;
+	fiber.lanes = lanes;
+	fiber.ref = ref;
+
 	return fiber;
 }
 
-export function createFiberFromFragment(elements: any[], key: Key): FiberNode {
+export function createFiberFromFragment(
+	elements: ReactElementType[],
+	lanes: Lanes,
+	key: Key
+): FiberNode {
 	const fiber = new FiberNode(Fragment, elements, key);
+	fiber.lanes = lanes;
 	return fiber;
 }

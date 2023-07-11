@@ -6,13 +6,13 @@ export type Props = {
 	children?: any;
 };
 
-export interface ReactElement {
+export interface ReactElementType {
 	$$typeof: symbol | number;
 	type: ElementType;
 	key: Key;
 	props: Props;
 	ref: Ref;
-	__mark: 'KaSong';
+	__mark: 'kt';
 }
 
 export type Action<State> = State | ((prevState: State) => State);
