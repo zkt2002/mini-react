@@ -285,7 +285,7 @@ function commitRoot(root: FiberRootNode) {
 		// 阶段1/3:beforeMutation
 
 		// 阶段2/3:Mutation
-		// mutation Placement
+		// mutation Placement 这一步会渲染fiber到真实DOM
 		commitMutationEffects(finishedWork, root);
 
 		// Fiber Tree切换

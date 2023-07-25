@@ -234,6 +234,7 @@ function ChildReconciler(shouldTrackEffects: boolean) {
 		lanes: Lanes
 	) {
 		// 遍历到的最后一个可复用fiber在before中的index
+		// 如果元素的在before中的index < 他，说明该元素是被移动到后面了
 		let lastPlacedIndex = 0;
 		// 创建的最后一个fiber
 		let lastNewFiber: FiberNode | null = null;
